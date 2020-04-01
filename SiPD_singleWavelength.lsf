@@ -1,0 +1,153 @@
+clear;
+## LOAD PARAMETERS
+## All units of length are in meters (m)
+## Adjustable Parameters ##
+
+p=600e-9;
+d=400e-9;
+thicknessPD = 1e-6;
+wavelength=450e-9;
+
+depth_hole=.4e-6;
+
+########################
+l = p*2;	# Photodetector Length
+w = p*2;	# Total Width of Photodetector
+
+## GEOMETRY############
+addrect;
+set('name', 'silicon PD');
+#set('use relative coordinates', 0);
+set('x', 0);
+set('x span', l);
+set('y', 0);
+set('y span', w);
+set('z min', 0);
+set('z max', thicknessPD);
+
+# Draw SiO2 substrate
+addrect;
+set("name","SOI substrate");
+#set("use relative coordinates",0);
+set('x', 0);
+set("x span",l);
+set('y', 0);
+set("y span",w);
+set("z min",-(thicknessPD *4));
+set("z max",0);
+#addtogroup("si_elements");
+
+
+##ADD nanostrcuture
+addcircle;
+set("name","circle");
+set("x",0);
+set("y",0);
+set("radius",d/2);
+set("z min",thicknessPD-depth_hole);
+set("z max",thicknessPD);
+
+
+## FDTD SIMULATION
+select("silicon PD");
+set("material","Si (Silicon) - Palik");
+
+select("SOI substrate");
+set("material","SiO2 (Glass) - Palik");
+
+
+# Add Optical Source (PLane Source)
+addplane;
+set("name","optical_in");
+#set("use relative coordinates",0);
+set("injection axis","z-axis");
+set("direction","backward");
+set("x",0);
+set("x span",w);
+set("y",0);
+set("y span",l);
+set("z",thicknessPD *1.3);
+#set("z max", l);
+#zspan_mode = get("z span"); # Needed for generation monitor
+
+set("wavelength start", wavelength);
+set("wavelength stop",wavelength);
+
+# Add simulation region.
+
+addfdtd;
+
+set("y",0);
+set("y span",p);
+set("z min",-(thicknessPD *3) );
+set("z max", thicknessPD*2);
+set("x",0);
+set("x span",p);
+#set("y max bc","Anti-Symmetric");
+#https://support.lumerical.com/hc/en-us/articles/360034382694-Symmetric-and-anti-symmetric-BCs-in-FDTD-and-MODE
+set('allow symmetry on all boundaries',1);
+set("x min bc","Anti-Symmetric"); 
+set("x max bc","Anti-Symmetric");
+set("y min bc","Symmetric");
+set("y max bc","Symmetric");
+
+set("simulation time",1000e-15); # Maximum simulation time
+
+
+
+### ADDING MESH ####
+addmesh;
+set("name","mesh_circle");
+# set dimension
+set("x",0);
+set("x span",p);
+set("y",0);
+set("y span",p);
+set("z min",0);
+set("z max",thicknessPD);
+# enable in X direction and disable in Y,Z directions
+set("set maximum mesh step",1);
+
+set("override x mesh",1);
+set("override y mesh",1);
+set("override z mesh",1);
+
+set("dx",10e-9);
+set("dy",10e-9);
+set("dz",10e-9);
+
+# restrict mesh by defining maximum step size
+
+##MONITORS R,T
+addpower;  ## Transmitance
+set('name', 'T');
+set("y",0);
+set("y span",p+(p*.5));
+set("x",0);
+set("x span",p+(p*.5));
+set("z",-2e-6);
+#set('override global monitor settings',1)
+#set ('use linear wavelenght spacing',1)
+#set ('frequency points', )
+
+addpower;  ## Reflectance
+set('name', 'R');
+set("y",0);
+set("y span",p+(p*.5));
+set("x",0);
+set("x span",p+(p*.5));
+set("z",thicknessPD *1.5);
+
+## Add CW Generation Monitor
+#addobject("CW_generation");
+##set("use relative coordinates",0);
+#set("x",0);
+#set("x span",p);
+#set("y",0);
+#set("y span",p);
+#set("z",(thicknessPD/2));
+#set("z span",(thicknessPD *1.3));
+#set("source intensity",1);
+#set("average dimension","x");
+
+#run;
