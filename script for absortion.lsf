@@ -1,0 +1,5 @@
+f = getdata("T","f") ; # frequency vector
+R = transmission("R");
+T = -transmission("T");
+plot(c/f*1e6, R, T, 1-R-T, "wavelength (um)", "Power", "Simulation of Silicon with 2.5 um thickness");
+legend("R", "T", "A");
